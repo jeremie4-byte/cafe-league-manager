@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend= "hatchling.build"
+
+[project]
+name= "cafe-league-manager"
+version = "0.0.1"
+authors = [
+    {
+        name= "Jeremie Lortie",
+        email= "Jejelortie@gmail.com"
+    }
+]
+description = "CRUD Cafe League Manager System for players, events, matches and attendances"
+readme = "README.md"
+requires-python = ">= 3.13.5"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E"]
+
+[project.urls]
+Homepage = "https://github.com/jeremie4-byte/cafe-league-manager"
