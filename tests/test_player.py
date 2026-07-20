@@ -51,3 +51,21 @@ class TestPlayer (unittest.TestCase):
     def test_4000_elo(self):
         player9 = Player(9, "Kim Stronglet", "Tournament Competitor", datetime(2022, 4, 17), 4000)
         self.assertEqual(player9.current_elo, 4000)
+
+    """Unit test to check whether positive id are accepted"""
+    def test_positive_id(self):
+        player10 = Player(10, "Ella", "Casual Drop-In", datetime(2026, 3, 16), 1129)
+        self.assertEqual(player10.player_id, 10)
+
+    """Unit test to check that negative id are rejected"""
+    def test_negative_id(self):
+        with self.assertRaises(ValueError):
+            player11 = Player(-11, "Yahela Fondster", "League Regular", datetime(2023, 4, 4), 3864)
+
+    def test_valid_name(self):
+        player12 = Player(12, "Kim Longster", "League Regular", datetime(2025, 10, 7), 2674)
+        self.assertEqual(player12.player_name, "Kim Longster")
+
+    def test_invalid_name(self):
+        with self.assertRaises(ValueError):
+            player13 = Player(13, "", "Casual Drop-In", datetime(2024, 7, 7), 3059)
