@@ -11,7 +11,11 @@ class PlayerType(Enum):
 class Player:
     def __init__(self, player_id, player_name, player_type: PlayerType, join_date: datetime, current_elo):
         self.player_id = player_id
+        if player_id < 0:
+            raise ValueError
         self.player_name = player_name
+        if player_name == "":
+            raise ValueError
         self.player_type = player_type
         if player_type != "Casual Drop-In" and player_type != "League Regular" and player_type != "Tournament Competitor":
             raise ValueError
