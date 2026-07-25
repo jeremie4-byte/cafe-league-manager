@@ -1,11 +1,13 @@
-from player import Player
-from match_player import MatchPlayer, MatchResult, Attendance
+from domains.player import Player
+from domains.match_player import MatchPlayer, MatchResult, Attendance
 K_FACTOR = 30
 
 class EloCalculation:
     #We start by calculating the player's win probability
     @staticmethod
     def probabilistic_elo(rating_a, rating_b):
+        if not (0 <= rating_a <= 4000) or not (0 <= rating_b <= 4000):
+            raise ValueError("Ratings must be between 0 and 4000")
         win_probabilityA =1.0 / (1 + (10**((rating_b - rating_a)/400)))
         win_probabilityB = 1 - win_probabilityA
         return (win_probabilityA, win_probabilityB)
