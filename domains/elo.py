@@ -15,7 +15,23 @@ class EloCalculation:
     #Static method to calculate duel win, draw and loses elo
     @staticmethod
     def elo_outcome(players_list, match_players_list):
+
         #We make a new list conssiting of players and all the players within the specific match
+        if len(players_list) != len(match_players_list):
+            raise ValueError
+        
+        for player, match_player in zip(players_list, match_players_list):
+            if player.player_id != match_player.player_id:
+                raise ValueError
+            
+        active_players = []
+        for match_player in match_players_list:
+            if match_player.attendance == Attendance.ATTENDED:
+                active_players.append(match_player)
+
+        if len(active_players) < 2:
+            raise ValueError
+
         player_ranking = list(zip(players_list, match_players_list))
 
         #Match variables for winning, drawing or losing, which will be used later to update player elo
@@ -72,6 +88,7 @@ class EloCalculation:
             # if there are no opponents skip the calculating logic
             if counter == 0:
                 continue
+
             # We divide elo_delta by the number of players to scale winnings down to the number of total opponents
             elo_delta = elo_delta/counter
 
@@ -84,7 +101,8 @@ class EloCalculation:
             #for all players in player_list check if the id is equal and then apply elo changes
             for p in players_list:
                 if p.player_id == player_id: 
-                    p.current_elo += value
+                    new_rating = round(p.current_elo + value)
+                    p.current_elo = max(0, min(new_rating, 4000))
 
         # We return the updated players list and the elo_calculations for future audit logs
         return (players_list, elo_update)
