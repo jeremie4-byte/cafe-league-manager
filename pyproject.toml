@@ -6,10 +6,7 @@ build-backend= "hatchling.build"
 name= "cafe-league-manager"
 version = "0.0.1"
 authors = [
-    {
-        name= "Jeremie Lortie",
-        email= "Jejelortie@gmail.com"
-    }
+    {name= "Jeremie Lortie", email= "Jejelortie@gmail.com"}
 ]
 description = "CRUD Cafe League Manager System for players, events, matches and attendances"
 readme = "README.md"
@@ -22,4 +19,5 @@ license = "MIT"
 license-files = ["LICEN[CS]E"]
 
 [project.urls]
+Homepage = "https://github.com/jeremie4-byte/cafe-league-manager"
 Homepage = "https://github.com/jeremie4-byte/cafe-league-manager"
