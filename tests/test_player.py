@@ -2,6 +2,7 @@ from domains.player import Player, PlayerType
 import unittest
 from datetime import datetime
 from enum import Enum
+from services.validators import validate_positive_id, validate_min_name_length, validate_datetime_format, validate_elo_range
 
 class TestPlayer (unittest.TestCase):
     
@@ -14,8 +15,8 @@ class TestPlayer (unittest.TestCase):
         self.assertEqual(self.player.player_type, PlayerType.CASUAL_DROP_IN)
 
     def test_league_regular(self):
-        player2= Player(2, "Christina Cespedes", PlayerType.TOURNAMENT_COMPETITOR, datetime(2021, 2, 7), 1307)
-        self.assertEqual(player2.player_type, PlayerType.TOURNAMENT_COMPETITOR)
+        player2= Player(2, "Christina Cespedes", PlayerType.LEAGUE_REGULAR, datetime(2021, 2, 7), 1307)
+        self.assertEqual(player2.player_type, PlayerType.LEAGUE_REGULAR)
 
     def test_tournament_competitor(self):
         player3 = Player(3, "Jessica Johnson", PlayerType.TOURNAMENT_COMPETITOR, datetime(2023, 6, 25), 1673)
@@ -23,12 +24,12 @@ class TestPlayer (unittest.TestCase):
 
     """We run deliberately a Player class with a 'Rookie' (non-accepted player type and wait for the assert to raise a value error)"""
     def test_player_type(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             player4 = Player(4, "Noah Lanston", "Rookie", datetime(2026, 6, 12), 1305)
 
     """We deliberately run a Player class without a datetime attribute for join_date to see if the system will raise a VelueError as expected"""
     def test_join_date(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             player5 = Player(5, "Diana Merchand", PlayerType.LEAGUE_REGULAR, "2026-07-13", 1406)
 
 
@@ -54,7 +55,7 @@ class TestPlayer (unittest.TestCase):
 
     """Unit test to check whether positive id are accepted"""
     def test_positive_id(self):
-        player10 = Player(10, "Ella", PlayerType.CASUAL_DROP_IN, datetime(2026, 3, 16), 1129)
+        player10 = Player(10, "Ella Yutt", PlayerType.CASUAL_DROP_IN, datetime(2026, 3, 16), 1129)
         self.assertEqual(player10.player_id, 10)
 
     """Unit test to check that negative id are rejected"""
@@ -69,3 +70,20 @@ class TestPlayer (unittest.TestCase):
     def test_invalid_name(self):
         with self.assertRaises(ValueError):
             player13 = Player(13, "", PlayerType.CASUAL_DROP_IN, datetime(2024, 7, 7), 3059)
+
+    """Unit Test to see that whitespace is correctly remove"""
+    def test_name_whitespace_stripping(self):
+        raw_name = "  Jeremie  Lortie  "
+        self.assertEqual(validate_min_name_length(raw_name), "Jeremie Lortie")
+
+    """Unit test to see that name with less than 5 chars aren't accepted"""
+    def test_invalid_player_name(self):
+        with self.assertRaises(ValueError):
+            invalid_name = "Jer"
+            validate_min_name_length(invalid_name)
+
+    """"Unit test to verify that future dates from present date aren't accepted in join_date"""
+    def test_invalid_join_date(self):
+        with self.assertRaises(ValueError):
+            date = datetime(2030, 5, 22)
+            validate_datetime_format(date)
