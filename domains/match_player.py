@@ -1,4 +1,5 @@
 from enum import Enum
+from services.validators import *
 
 """Creating an Enum class for all different SQL match_result"""
 class MatchResult(Enum):
@@ -10,6 +11,7 @@ class MatchResult(Enum):
     SIXTH_PLACE = ("6th Place", 6)
     SEVENTH_PLACE = ("7th Place", 7)
     EIGHT_PLACE = ("8th Place", 8)
+    NONE = ("None", None)
 
 """Creating an Enum class for all different SQL attendance"""
 class Attendance(Enum):
@@ -20,15 +22,16 @@ class Attendance(Enum):
 """Creating match_player SQL table as a class"""
 class MatchPlayer:
     def __init__(self, player_id, match_id, match_result: MatchResult, attendance: Attendance):
-        self.player_id = player_id
-        if player_id < 0:
-            raise ValueError
-        self.match_id = match_id
-        if match_id < 0:
-            raise ValueError
-        self.match_result = match_result
+        self.player_id = validate_positive_id(player_id)
+        self.match_id = validate_positive_id(match_id)
         if not isinstance(match_result, MatchResult):
-            raise ValueError
-        self.attendance = attendance
+            raise TypeError("match_result must be a valid MatchResult enum instance")
+        
         if not isinstance(attendance, Attendance):
-            raise ValueError
+            raise TypeError("attendance must be a valid Attendance enum instance")
+        
+        if attendance in(Attendance.NO_SHOW, Attendance.CANCELLED):
+           match_result = MatchResult.NONE
+        
+        self.attendance = attendance
+        self.match_result = match_result
