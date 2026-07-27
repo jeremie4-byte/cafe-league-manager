@@ -17,7 +17,7 @@ class Event:
         if event_name == "":
             raise ValueError
         self.event_type = event_type
-        if event_type != "Open Game Night" and event_type != "Ranked League Match" and event_type != "Tournament Match":
+        if not isinstance(event_type, EventType):
             raise ValueError
         self.game_title = game_title
         if game_title == "":
