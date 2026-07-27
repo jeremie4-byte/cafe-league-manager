@@ -1,6 +1,8 @@
 from domains.match import Match
 import unittest
 from datetime import datetime
+from services.validators import validate_positive_id, validate_datetime_format
+
 
 class TestMatch(unittest.TestCase):
 
@@ -39,10 +41,16 @@ class TestMatch(unittest.TestCase):
 
     """Test to see that an unvalid datetime format for scheduele_match_time is rejected"""
     def test_invalid_schedule_time(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             match8 = Match(6, 6, "2026-03-18")
 
     """Test to see that a valid datetime format for scheduele_match_time is accepted"""
     def test_valid_scheduele_time(self):
         match9 = Match(7, 7, datetime(2023, 3, 3))
         self.assertEqual(match9.schedule_match_time, datetime(2023, 3, 3))
+
+    """Test to see that a future schedule time will not be accepted"""
+    def test_future_scheduele_time(self):
+        with self.assertRaises(ValueError):
+            future_date = datetime(2035, 7, 9)
+            validate_datetime_format(future_date)
