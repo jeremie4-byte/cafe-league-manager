@@ -17,7 +17,7 @@ class Player:
         if player_name == "":
             raise ValueError
         self.player_type = player_type
-        if player_type != "Casual Drop-In" and player_type != "League Regular" and player_type != "Tournament Competitor":
+        if not isinstance(player_type, PlayerType):
             raise ValueError
         self.join_date = join_date
         # We verify that join_date was actually entered as datetime format, if not we raise a value error
@@ -26,3 +26,4 @@ class Player:
         self.current_elo = current_elo
         if current_elo < 0 or current_elo > 4000:
             raise ValueError
+
