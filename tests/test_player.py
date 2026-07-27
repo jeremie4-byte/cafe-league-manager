@@ -7,19 +7,19 @@ class TestPlayer (unittest.TestCase):
     
     """Default test case to be tested"""
     def setUp(self):
-        self.player = Player(1, "Jeremie Lortie", "Casual Drop-In", datetime(2026, 7, 19), 1500)
+        self.player = Player(1, "Jeremie Lortie", PlayerType.CASUAL_DROP_IN, datetime(2026, 7, 19), 1500)
 
     """Test to see if Casual Drop-In is accepted"""
     def test_casual_drop_in(self):
-        self.assertEqual(self.player.player_type, "Casual Drop-In")
+        self.assertEqual(self.player.player_type, PlayerType.CASUAL_DROP_IN)
 
     def test_league_regular(self):
-        player2= Player(2, "Christina Cespedes", "League Regular", datetime(2021, 2, 7), 1307)
-        self.assertEqual(player2.player_type, "League Regular")
+        player2= Player(2, "Christina Cespedes", PlayerType.TOURNAMENT_COMPETITOR, datetime(2021, 2, 7), 1307)
+        self.assertEqual(player2.player_type, PlayerType.TOURNAMENT_COMPETITOR)
 
     def test_tournament_competitor(self):
-        player3 = Player(3, "Jessica Johnson", "Tournament Competitor", datetime(2023, 6, 25), 1673)
-        self.assertEqual(player3.player_type, "Tournament Competitor")
+        player3 = Player(3, "Jessica Johnson", PlayerType.TOURNAMENT_COMPETITOR, datetime(2023, 6, 25), 1673)
+        self.assertEqual(player3.player_type, PlayerType.TOURNAMENT_COMPETITOR)
 
     """We run deliberately a Player class with a 'Rookie' (non-accepted player type and wait for the assert to raise a value error)"""
     def test_player_type(self):
@@ -29,43 +29,43 @@ class TestPlayer (unittest.TestCase):
     """We deliberately run a Player class without a datetime attribute for join_date to see if the system will raise a VelueError as expected"""
     def test_join_date(self):
         with self.assertRaises(ValueError):
-            player5 = Player(5, "Diana Merchand", "League Regular", "2026-07-13", 1406)
+            player5 = Player(5, "Diana Merchand", PlayerType.LEAGUE_REGULAR, "2026-07-13", 1406)
 
 
     """Here we test to see that a value error raises if current elo isn't between 0 and 4000"""
     def test_wrong_elo(self):
         with self.assertRaises(ValueError):
-            player6 = Player(6, "Erica Vieuxbled", "Tournament Competitor", datetime(2026, 5, 22), -500)
+            player6 = Player(6, "Erica Vieuxbled", PlayerType.TOURNAMENT_COMPETITOR, datetime(2026, 5, 22), -500)
 
     """Unit test to see thqt the current elo of a player is within range"""
     def test_right_elo(self):
-        player7 = Player(7, "Ebony Shapot", "League Regular", datetime(2025, 12, 21), 1200)
+        player7 = Player(7, "Ebony Shapot", PlayerType.LEAGUE_REGULAR, datetime(2025, 12, 21), 1200)
         self.assertEqual(player7.current_elo, 1200)
 
     """Unit test to see if a player with 0 elo score is accepted"""
     def test_0_elo(self):
-        player8 = Player(8, "Christian Lauzon", "Casual Drop-In", datetime(2024, 11, 5), 0)
+        player8 = Player(8, "Christian Lauzon", PlayerType.CASUAL_DROP_IN, datetime(2024, 11, 5), 0)
         self.assertEqual(player8.current_elo, 0)
 
     """Unit test to see if a player with 4000 elo score is accepted"""
     def test_4000_elo(self):
-        player9 = Player(9, "Kim Stronglet", "Tournament Competitor", datetime(2022, 4, 17), 4000)
+        player9 = Player(9, "Kim Stronglet", PlayerType.TOURNAMENT_COMPETITOR, datetime(2022, 4, 17), 4000)
         self.assertEqual(player9.current_elo, 4000)
 
     """Unit test to check whether positive id are accepted"""
     def test_positive_id(self):
-        player10 = Player(10, "Ella", "Casual Drop-In", datetime(2026, 3, 16), 1129)
+        player10 = Player(10, "Ella", PlayerType.CASUAL_DROP_IN, datetime(2026, 3, 16), 1129)
         self.assertEqual(player10.player_id, 10)
 
     """Unit test to check that negative id are rejected"""
     def test_negative_id(self):
         with self.assertRaises(ValueError):
-            player11 = Player(-11, "Yahela Fondster", "League Regular", datetime(2023, 4, 4), 3864)
+            player11 = Player(-11, "Yahela Fondster", PlayerType.LEAGUE_REGULAR, datetime(2023, 4, 4), 3864)
 
     def test_valid_name(self):
-        player12 = Player(12, "Kim Longster", "League Regular", datetime(2025, 10, 7), 2674)
+        player12 = Player(12, "Kim Longster", PlayerType.LEAGUE_REGULAR , datetime(2025, 10, 7), 2674)
         self.assertEqual(player12.player_name, "Kim Longster")
 
     def test_invalid_name(self):
         with self.assertRaises(ValueError):
-            player13 = Player(13, "", "Casual Drop-In", datetime(2024, 7, 7), 3059)
+            player13 = Player(13, "", PlayerType.CASUAL_DROP_IN, datetime(2024, 7, 7), 3059)
