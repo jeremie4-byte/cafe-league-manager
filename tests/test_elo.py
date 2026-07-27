@@ -1,6 +1,6 @@
 import unittest
 
-from domains.player import Player
+from domains.player import Player, PlayerType
 from domains.match_player import MatchPlayer, MatchResult, Attendance
 from domains.elo import EloCalculation, K_FACTOR
 from datetime import datetime
@@ -57,8 +57,8 @@ class TestEloCalculation(unittest.TestCase):
 
     def test_elo_outcome_2_players(self):
         """We build our 2 Player objects to test"""
-        winning_player = Player(1, "Jeremie Lortie", "League Regular", datetime(2025, 11, 4), 2000)
-        losing_player = Player(2, "Isis Montaño", "League Regular", datetime(2025, 4, 9), 3000)
+        winning_player = Player(1, "Jeremie Lortie", PlayerType.LEAGUE_REGULAR, datetime(2025, 11, 4), 2000)
+        losing_player = Player(2, "Isis Montaño", PlayerType.LEAGUE_REGULAR, datetime(2025, 4, 9), 3000)
         
         """We build the match results"""
         winning_match_player = MatchPlayer(1, 1, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -78,7 +78,7 @@ class TestEloCalculation(unittest.TestCase):
     def test_elo_outcome_1_active_player(self):
 
         """We build an invalid 1 player object to test for elo changes"""
-        player = Player(3, "Devin Wiksburgen", "Tournament Competitor", datetime(2026, 2, 13), 1500)
+        player = Player(3, "Devin Wiksburgen", PlayerType.TOURNAMENT_COMPETITOR, datetime(2026, 2, 13), 1500)
 
         """We build his invalid match result"""
         player_result = MatchPlayer(3, 2, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -94,8 +94,8 @@ class TestEloCalculation(unittest.TestCase):
     def test_cancelled_2_player_match(self):
 
         """We build 2 player objects where one player attended and the other cancelled"""
-        attended_player = Player(4, "John Doe", "League Regular", datetime(2026, 3, 28), 3500)
-        cancelled_player = Player(5, "Jane Doe", "Tournament Competitor", datetime(2025, 6, 19), 2500)
+        attended_player = Player(4, "John Doe", PlayerType.LEAGUE_REGULAR, datetime(2026, 3, 28), 3500)
+        cancelled_player = Player(5, "Jane Doe", PlayerType.TOURNAMENT_COMPETITOR, datetime(2025, 6, 19), 2500)
 
         """We build the results even if one player cancelled"""
         attended_match__player = MatchPlayer(4, 3, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -112,8 +112,8 @@ class TestEloCalculation(unittest.TestCase):
     def test_no_show_2_player_match(self):
 
         """We build 2 player objects where one player attended and the other one no showed"""
-        attended_player = Player(6, "Myriam De Grandpé", "League Regular", datetime(2025, 12, 17), 2000)
-        no_show_player = Player(7, "Johnny Themstack", "League Regular", datetime(2026, 7, 26), 1000)
+        attended_player = Player(6, "Myriam De Grandpé", PlayerType.LEAGUE_REGULAR, datetime(2025, 12, 17), 2000)
+        no_show_player = Player(7, "Johnny Themstack", PlayerType.LEAGUE_REGULAR, datetime(2026, 7, 26), 1000)
 
         """We build the results even if one player did a no show"""
         attended_match_player = MatchPlayer(6, 4, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -130,8 +130,8 @@ class TestEloCalculation(unittest.TestCase):
     def test_uneven_match_results_and_players(self):
         
         """We build 2 player object"""
-        player1 = Player(8, "Romeo Gomez", "League Regular", datetime(2026, 5, 22), 2500)
-        player2 = Player(9, "Johanna Montigny", "League Regular", datetime(2026, 1, 8), 3500)
+        player1 = Player(8, "Romeo Gomez", PlayerType.LEAGUE_REGULAR, datetime(2026, 5, 22), 2500)
+        player2 = Player(9, "Johanna Montigny", PlayerType.LEAGUE_REGULAR, datetime(2026, 1, 8), 3500)
 
         """We build only one Match Result"""
         match_player1 = MatchPlayer(8, 5, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -147,8 +147,8 @@ class TestEloCalculation(unittest.TestCase):
     def test_mismatched_player_and_match_player_id(self):
 
         """We build 2 player objects"""
-        player1 = Player(10, "Karl Marshall", "League Regular", datetime(2025, 10, 7), 500)
-        player2 = Player(11, "Phillip Trottier", "League Regular", datetime(2025, 9, 19), 3600)
+        player1 = Player(10, "Karl Marshall", PlayerType.LEAGUE_REGULAR, datetime(2025, 10, 7), 500)
+        player2 = Player(11, "Phillip Trottier", PlayerType.LEAGUE_REGULAR, datetime(2025, 9, 19), 3600)
 
         """We build Match results with the wrong player ids"""
         match_player1 = MatchPlayer(12, 6, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -165,8 +165,8 @@ class TestEloCalculation(unittest.TestCase):
     def test_upper_4000_elo_boundary(self):
 
         """We build 2 player objects both with 4000 elos"""
-        player1 = Player(13, "Sarah Bertrand", "League Regular", datetime(2024, 12, 12), 4000)
-        player2 = Player(14, "Yu Nguyen", "League Regular", datetime(2025, 2, 3), 4000)
+        player1 = Player(13, "Sarah Bertrand", PlayerType.LEAGUE_REGULAR, datetime(2024, 12, 12), 4000)
+        player2 = Player(14, "Yu Nguyen", PlayerType.LEAGUE_REGULAR, datetime(2025, 2, 3), 4000)
 
         """We build the match results"""
         match_player_1 = MatchPlayer(13, 7, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -184,8 +184,8 @@ class TestEloCalculation(unittest.TestCase):
     def test_lower_0_elo_boundary(self):
 
         """We build 2 player objects with 0 elo"""
-        player1 = Player(15, "Kenneth McLaud", "League Regular", datetime(2026, 7, 26), 0)
-        player2 = Player(16, "Daniela Torrealba", "League Regular", datetime(2026, 7, 26), 0)
+        player1 = Player(15, "Kenneth McLaud", PlayerType.LEAGUE_REGULAR, datetime(2026, 7, 26), 0)
+        player2 = Player(16, "Daniela Torrealba", PlayerType.LEAGUE_REGULAR, datetime(2026, 7, 26), 0)
 
         """We build the match results"""
         match_player_1 = MatchPlayer(15, 8, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -204,14 +204,14 @@ class TestEloCalculation(unittest.TestCase):
     def test_elo_outcome_multiplayer_match(self):
 
         """We build 8 players"""
-        player1 = Player(17, "Benoit Trottier", "League Regular", datetime(2025, 9, 18), 1500)
-        player2 = Player(18, "Katie Sintorc", "League Regular", datetime(2026, 6, 21), 1500)
-        player3 = Player(19, "Kyra Provencal", "League Regular", datetime(2026, 5, 30), 1500)
-        player4 = Player(20 , "Cameron Charlton", "League Regular", datetime(2025, 7, 1), 1500)
-        player5 = Player(21, "Christian Champagne", "League Regular", datetime(2025, 4, 19), 1500)
-        player6 = Player(22, "Firinn Wylde", "League Regular", datetime(2026, 1, 11), 1500)
-        player7 = Player(23, "Jason Langlois", "League Regular", datetime(2026, 2, 2), 1500)
-        player8 = Player(24, "Lea Schramm", "League Regular", datetime(2026, 5, 25), 1500)
+        player1 = Player(17, "Benoit Trottier", PlayerType.LEAGUE_REGULAR, datetime(2025, 9, 18), 1500)
+        player2 = Player(18, "Katie Sintorc", PlayerType.LEAGUE_REGULAR, datetime(2026, 6, 21), 1500)
+        player3 = Player(19, "Kyra Provencal", PlayerType.LEAGUE_REGULAR, datetime(2026, 5, 30), 1500)
+        player4 = Player(20 , "Cameron Charlton", PlayerType.LEAGUE_REGULAR, datetime(2025, 7, 1), 1500)
+        player5 = Player(21, "Christian Champagne", PlayerType.LEAGUE_REGULAR, datetime(2025, 4, 19), 1500)
+        player6 = Player(22, "Firinn Wylde", PlayerType.LEAGUE_REGULAR, datetime(2026, 1, 11), 1500)
+        player7 = Player(23, "Jason Langlois", PlayerType.LEAGUE_REGULAR, datetime(2026, 2, 2), 1500)
+        player8 = Player(24, "Lea Schramm", PlayerType.LEAGUE_REGULAR, datetime(2026, 5, 25), 1500)
 
         "We build the match results"
         match_player1 = MatchPlayer(17, 9, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -242,10 +242,10 @@ class TestEloCalculation(unittest.TestCase):
     def test_equal_multiplayer_elo_outcome(self):
 
         """We build 4 players"""
-        player1 = Player(25, "Isabelle Cadic", "League Regular", datetime(2026, 2, 12), 1500)
-        player2 = Player(26, "Flavien Pacary", "League Regular", datetime(2026, 4, 14), 1500)
-        player3 = Player(27, "David Rousseau", "League Regular", datetime(2025, 11, 16), 1500)
-        player4 = Player(28, "Corinne Palisse", "League Regular", datetime(2026, 1, 17), 1500)
+        player1 = Player(25, "Isabelle Cadic", PlayerType.LEAGUE_REGULAR, datetime(2026, 2, 12), 1500)
+        player2 = Player(26, "Flavien Pacary", PlayerType.LEAGUE_REGULAR, datetime(2026, 4, 14), 1500)
+        player3 = Player(27, "David Rousseau", PlayerType.LEAGUE_REGULAR, datetime(2025, 11, 16), 1500)
+        player4 = Player(28, "Corinne Palisse", PlayerType.LEAGUE_REGULAR, datetime(2026, 1, 17), 1500)
 
         """We build equal test results"""
         match_player1 = MatchPlayer(25, 10, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
@@ -268,10 +268,10 @@ class TestEloCalculation(unittest.TestCase):
     def test_partially_attended_multiplayer_match(self):
 
         """We build 4 players"""
-        player1 = Player(29, "Michael Durap", "League Regular", datetime(2026, 6, 29), 1500)
-        player2 = Player(30, "Nicholas Lamontagne", "League Regular", datetime(2025, 8, 23), 1500)
-        player3 = Player(31, "Stacy Irving", "League Regular", datetime(2025, 9, 18), 1500)
-        player4 = Player(32, "Matthew McKnight", "League Regular", datetime(2026, 3, 1), 1500)
+        player1 = Player(29, "Michael Durap", PlayerType.LEAGUE_REGULAR, datetime(2026, 6, 29), 1500)
+        player2 = Player(30, "Nicholas Lamontagne", PlayerType.LEAGUE_REGULAR, datetime(2025, 8, 23), 1500)
+        player3 = Player(31, "Stacy Irving", PlayerType.LEAGUE_REGULAR, datetime(2025, 9, 18), 1500)
+        player4 = Player(32, "Matthew McKnight", PlayerType.LEAGUE_REGULAR, datetime(2026, 3, 1), 1500)
 
         """We build match players with one player that cancelled, and one that was a no-show"""
         match_player1 = MatchPlayer(29, 11, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
