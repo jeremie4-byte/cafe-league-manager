@@ -2,6 +2,7 @@ from domains.event import Event, EventType
 import unittest
 from datetime import datetime
 from enum import Enum
+from services.validators import validate_datetime_format, validate_min_name_length, validate_event_capacity
 
 class TestEvent(unittest.TestCase):
 
@@ -60,7 +61,7 @@ class TestEvent(unittest.TestCase):
 
     """Test invalid event type"""
     def test_invalid_event_type(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             event10 = Event(8, "MW2: Terminal No-Scopes", "Free-for-all", "Call of Duty: Modern Warfare 2", 16, datetime(2026, 4, 23))
 
     """Test invalid Game Title"""
@@ -75,7 +76,7 @@ class TestEvent(unittest.TestCase):
 
     """Test invalid event date format"""
     def test_invalid_event_date(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             event13 = Event(11, "Minecraft: speedrun of the ender Dragon Quest", EventType.RANKED_LEAGUE_MATCH, "Minecraft", 100, "2026-07-09")
 
     """Test valid event date format"""
@@ -102,3 +103,27 @@ class TestEvent(unittest.TestCase):
     def test_valid_game_capacity(self):
         event18 = Event(16, "Fortnite: TDM", EventType.TOURNAMENT_MATCH, "Fortnite", 65, datetime(2024, 9, 19))
         self.assertEqual(event18.event_capacity, 65)
+
+    """Test invalid game name below 5 chars"""
+    def test_invalid_less_than_5_chars_game_name(self):
+        with self.assertRaises(ValueError):
+            game_name = "COD" 
+            validate_min_name_length(game_name)
+
+    """Test game capacity below 0 is rejected """
+    def test_negative_game_capacity(self):
+        with self.assertRaises(ValueError):
+            game_capacity = -5
+            validate_event_capacity(game_capacity)
+
+    """Test game capacity over 100 is rejected"""
+    def test_over_100_game_capacity(self):
+        with self.assertRaises(ValueError):
+            game_capacity = 500
+            validate_event_capacity(game_capacity)
+
+    """Test that a future event date is not accepted"""
+    def test_invalid_future_event_date(self):
+        with self.assertRaises(ValueError):
+            invalid_future_date = datetime(2030, 9, 9)
+            validate_datetime_format(invalid_future_date)
