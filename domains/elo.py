@@ -1,108 +1,81 @@
-from domains.player import Player
+from domains.player import Player, PlayerType
 from domains.match_player import MatchPlayer, MatchResult, Attendance
+from domains.event import EventType
+
 K_FACTOR = 30
 
 class EloCalculation:
-    #We start by calculating the player's win probability
+
     @staticmethod
-    def probabilistic_elo(rating_a, rating_b):
+    def probabilistic_elo(rating_a: float, rating_b: float) -> tuple[float, float]:
         if not (0 <= rating_a <= 4000) or not (0 <= rating_b <= 4000):
             raise ValueError("Ratings must be between 0 and 4000")
-        win_probabilityA =1.0 / (1 + (10**((rating_b - rating_a)/400)))
-        win_probabilityB = 1 - win_probabilityA
-        return (win_probabilityA, win_probabilityB)
+        win_prob_a = 1.0 / (1 + (10 ** ((rating_b - rating_a) / 400)))
+        win_prob_b = 1.0 - win_prob_a
+        return (win_prob_a, win_prob_b)
     
-    #Static method to calculate duel win, draw and loses elo
     @staticmethod
-    def elo_outcome(players_list, match_players_list):
+    def elo_outcome(players_list: list[Player],  match_players_list: list[MatchPlayer], event_type):
 
-        #We make a new list conssiting of players and all the players within the specific match
+        if event_type == EventType.OPEN_GAME_NIGHT:
+            return (players_list, {})
+
+        # 1. Structural Guard Checks
         if len(players_list) != len(match_players_list):
-            raise ValueError
+            raise ValueError("Player list and MatchPlayer list must be the same length!")
         
         for player, match_player in zip(players_list, match_players_list):
             if player.player_id != match_player.player_id:
-                raise ValueError
-            
-        active_players = []
-        for match_player in match_players_list:
-            if match_player.attendance == Attendance.ATTENDED:
-                active_players.append(match_player)
+                raise ValueError(f"Mismatched player IDs: {player.player_id} vs {match_player.player_id}")
 
-        if len(active_players) < 2:
-            raise ValueError
+        # 2. Filter Active Players
+        active_pairs = [
+            (p, mp) for p, mp in zip(players_list, match_players_list)
+            if mp.attendance == Attendance.ATTENDED
+        ]
 
-        player_ranking = list(zip(players_list, match_players_list))
+        if len(active_pairs) < 2:
+            raise ValueError("At least 2 attended players are required to calculate Elo changes!")
 
-        #Match variables for winning, drawing or losing, which will be used later to update player elo
-        MATCH_WIN = 1.0
-        MATCH_DRAW = 0.5
-        MATCH_LOSE = 0.0
-        
-        #empty dictionnary to store elo changes
+        # 3. Calculate Elo Deltas
         elo_update = {}
-        #The outerloop examines a current player
-        for player, match_player in player_ranking:
 
-            #if condition verifying attendance, if a player cancelled or didn't show up, the algorithm skips them entirely
-            if match_player.attendance == Attendance.CANCELLED or match_player.attendance == Attendance.NO_SHOW:
-                continue
-            
-            #Elo changes to be stored in elo_data and to be applied after all possible matchups of inner loop
-            elo_delta = 0
+        for player, match_player in active_pairs:
+            rank_a = match_player.match_result.value[1]
+            if rank_a is None:
+                raise ValueError(f"Player {player.player_id} attended but has no valid match rank!")
 
-            # Counter used to count total number of opposing players to modify K_FACTOR distributions
-            counter = 0
+            elo_delta = 0.0
+            opponents_counted = 0
 
-            #Inner loop to check scores against all other opponents for the current player
-            for opponent, match_opponent in player_ranking:
-                #If the player is the same as the opponent, we don't calculate their elo score and move on to compare the results with the next opponent
-                if player == opponent:
+            for opponent, match_opponent in active_pairs:
+                if player.player_id == opponent.player_id:
                     continue
-                
-                # If the opponent cancelled or did not show up, skip the elo calculation and move on to the next
-                elif match_opponent.attendance == Attendance.CANCELLED or match_opponent.attendance == Attendance.NO_SHOW:
+
+                rank_b = match_opponent.match_result.value[1]
+                if rank_b is None:
                     continue
-                
-                #If the player has a lower result (i.e. 1st place instead of 2nd) calculate the updated elo winning score
-                elif match_player.match_result.value[1] < match_opponent.match_result.value[1]:
-                    expected_score = EloCalculation.probabilistic_elo(player.current_elo, opponent.current_elo)
-                    elo_change = K_FACTOR * (MATCH_WIN - expected_score[0])
-                    counter += 1
-                    elo_delta += elo_change
 
-                #If the player has a bigger result (i.e. 2nd place instead of 1st) calculate the updated elo losing score
-                elif match_player.match_result.value[1] > match_opponent.match_result.value[1]:
-                    expected_score = EloCalculation.probabilistic_elo(player.current_elo, opponent.current_elo)
-                    elo_change = K_FACTOR * (MATCH_LOSE - expected_score[0])
-                    counter += 1
-                    elo_delta += elo_change
+                # Determine match score (1.0 for win, 0.5 for draw, 0.0 for loss)
+                if rank_a < rank_b:
+                    score = 1.0
+                elif rank_a > rank_b:
+                    score = 0.0
+                else:
+                    score = 0.5
 
-                #If the player has the sameresult (i.e. tie) calculate the updated elo draw score score
-                elif match_player.match_result.value[1] == match_opponent.match_result.value[1]:
-                    expected_score = EloCalculation.probabilistic_elo(player.current_elo, opponent.current_elo)
-                    elo_change = K_FACTOR * (MATCH_DRAW - expected_score[0])
-                    counter += 1
-                    elo_delta += elo_change
+                expected_score, _ = EloCalculation.probabilistic_elo(player.current_elo, opponent.current_elo)
+                elo_delta += K_FACTOR * (score - expected_score)
+                opponents_counted += 1
 
-            # if there are no opponents skip the calculating logic
-            if counter == 0:
-                continue
+            if opponents_counted > 0:
+                # Average delta across all opponents in multi-player match
+                elo_update[player.player_id] = elo_delta / opponents_counted
 
-            # We divide elo_delta by the number of players to scale winnings down to the number of total opponents
-            elo_delta = elo_delta/counter
+        # 4. Apply Ratings Updates
+        for player in players_list:
+            if player.player_id in elo_update:
+                new_rating = round(player.current_elo + elo_update[player.player_id])
+                player.current_elo = max(0, min(new_rating, 4000))
 
-            #Add the elo_delta from all match results to the player's current elo
-            elo_update[player.player_id] = elo_delta
-
-            # new loop to apply elo wins, draws and losses to all players using the items() function
-        for player_id, value in elo_update.items(): 
-
-            #for all players in player_list check if the id is equal and then apply elo changes
-            for p in players_list:
-                if p.player_id == player_id: 
-                    new_rating = round(p.current_elo + value)
-                    p.current_elo = max(0, min(new_rating, 4000))
-
-        # We return the updated players list and the elo_calculations for future audit logs
         return (players_list, elo_update)
