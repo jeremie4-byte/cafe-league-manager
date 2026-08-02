@@ -3,6 +3,7 @@ import unittest
 from domains.player import Player, PlayerType
 from domains.match_player import MatchPlayer, MatchResult, Attendance
 from domains.elo import EloCalculation, K_FACTOR
+from domains.event import EventType
 from datetime import datetime
 
 class TestEloCalculation(unittest.TestCase):
@@ -27,7 +28,7 @@ class TestEloCalculation(unittest.TestCase):
 
     def test_negative_elo_raises_error (self):
 
-        """Test to see that negative elo raises a Value Error without applying the gains formula"""
+        """Test to see that negative elo raises a Type Error without applying the gains formula"""
         with self.assertRaises(ValueError):
             EloCalculation.probabilistic_elo(-500, 3219)
 
@@ -69,7 +70,7 @@ class TestEloCalculation(unittest.TestCase):
         match_players_list = [winning_match_player, losing_match_player]
 
         """We now insert the lists intot our function to make sure Jeremie wins elo and Isis loses elo"""
-        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.RANKED_LEAGUE_MATCH)
 
         """We verify to see that Jeremie has now more than 2000 elo and Isis has now less than 3000 elo"""
         self.assertGreater(winning_player.current_elo, 2000)
@@ -89,7 +90,7 @@ class TestEloCalculation(unittest.TestCase):
 
         """We test to see that a Value Error will be raised"""
         with self.assertRaises(ValueError):
-             updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+             updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.TOURNAMENT_MATCH)
 
     def test_cancelled_2_player_match(self):
 
@@ -107,7 +108,7 @@ class TestEloCalculation(unittest.TestCase):
 
         """We verify that no elo changes will be made and that an error will be raised instead"""
         with self.assertRaises(ValueError):
-            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.TOURNAMENT_MATCH)
 
     def test_no_show_2_player_match(self):
 
@@ -125,7 +126,7 @@ class TestEloCalculation(unittest.TestCase):
 
         """We verify that no elo changes will be made and that an error will be raised instead"""
         with self.assertRaises(ValueError):
-            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.RANKED_LEAGUE_MATCH)
 
     def test_uneven_match_results_and_players(self):
         
@@ -142,7 +143,7 @@ class TestEloCalculation(unittest.TestCase):
 
         """We test to see that a Value Error is generated for the uneven player list and player results"""
         with self.assertRaises(ValueError):
-            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.RANKED_LEAGUE_MATCH)
 
     def test_mismatched_player_and_match_player_id(self):
 
@@ -160,7 +161,7 @@ class TestEloCalculation(unittest.TestCase):
 
         """We test to see that a Value Error is generated for the mismatched of player ID between the player and match_player objects"""
         with self.assertRaises(ValueError):
-            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+            updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.TOURNAMENT_MATCH)
 
     def test_upper_4000_elo_boundary(self):
 
@@ -176,7 +177,7 @@ class TestEloCalculation(unittest.TestCase):
         player_list = [player1, player2]
         match_players_list = [match_player_1, match_player2]
 
-        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.RANKED_LEAGUE_MATCH)
 
         """We test to see that player 1's score does not exceed 4000 as it is our elo maximum"""
         self.assertEqual(player1.current_elo, 4000)
@@ -195,7 +196,7 @@ class TestEloCalculation(unittest.TestCase):
         player_list = [player1, player2]
         match_players_list = [match_player_1, match_player_2]
 
-        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.TOURNAMENT_MATCH)
 
         """We test to see that player 2's score does not go below 0 as it is our elo minimum"""
         self.assertEqual(player2.current_elo, 0)
@@ -228,7 +229,7 @@ class TestEloCalculation(unittest.TestCase):
         match_players_list = [match_player1, match_player2, match_player3, match_player4, match_player5, match_player6, match_player7, match_player8]
 
         """We run our static method"""
-        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.RANKED_LEAGUE_MATCH)
 
         """we verify that each place has more elo than the one below it"""
         self.assertGreater(player1.current_elo, player2.current_elo)
@@ -258,7 +259,7 @@ class TestEloCalculation(unittest.TestCase):
         match_players_list = [match_player1, match_player2, match_player3, match_player4]
 
         """We run our static method"""
-        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.TOURNAMENT_MATCH)
 
         """We verify that all updated elo outcomes are equal"""
         self.assertEqual(player1.current_elo, player2.current_elo)
@@ -284,9 +285,26 @@ class TestEloCalculation(unittest.TestCase):
         match_players_list = [match_player1, match_player2, match_player3, match_player4]
 
         """We run our static method"""
-        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list)
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.RANKED_LEAGUE_MATCH)
 
         """We test that player2 and player3 elo remain unchanged while testing that player 1's elo is greater than player 4"""
         self.assertGreater(player1.current_elo, player4.current_elo)
         self.assertEqual(player2.current_elo, 1500)
         self.assertEqual(player3.current_elo, 1500)
+
+    def test_open_game_night_skips_elo(self):
+        """ Open Game Night events should return players unchanged with no elo_update entries"""
+        player1 = Player(33, "Test Player A", PlayerType.LEAGUE_REGULAR, datetime(2026, 1, 1), 1500)
+        player2 = Player(34, "Test Player B", PlayerType.LEAGUE_REGULAR, datetime(2026, 1, 1), 1500)
+
+        match_player1 = MatchPlayer(33, 12, MatchResult.FIRST_PLACE, Attendance.ATTENDED)
+        match_player2 = MatchPlayer(34, 12, MatchResult.SECOND_PLACE, Attendance.ATTENDED)
+
+        player_list = [player1, player2]
+        match_players_list = [match_player1, match_player2]
+
+        updated_players, elo_changes = EloCalculation.elo_outcome(player_list, match_players_list, EventType.OPEN_GAME_NIGHT)
+
+        self.assertEqual(elo_changes, {})
+        self.assertEqual(player1.current_elo, 1500)
+        self.assertEqual(player2.current_elo, 1500)
