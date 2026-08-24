@@ -131,3 +131,47 @@ def delete_player_by_id(player_id: int):
     #Finally we close the db connection
     finally:
         db_connection.close()
+
+def get_all_players():
+
+    """We first establish the db connection"""
+    db_connection = get_connection()
+
+    """We create the player_cursor to naviguate and manipulate the player table"""
+    player_cursor = db_connection.cursor()
+
+    """ We now SELECT all player entries to display
+        all player objects that have been created.
+    """
+
+    try:
+
+        player_cursor.execute(
+            """
+            SELECT player_id, player_name, player_type, join_date, current_elo
+            FROM Cafe_Player
+            """
+        )
+
+        """ We assign a new variable (player_repository) where the cursor fetches all player entries"""
+
+        player_repository = player_cursor.fetchall()
+
+        """We create an empty list to append all player entries """
+        player_list = []
+
+        for player_row in player_repository:
+            player_entry = Player(
+                player_row["player_id"],
+                player_row["player_name"],
+                PlayerType(player_row["player_type"]),
+                datetime.fromisoformat(player_row["join_date"]),
+                player_row["current_elo"])
+            player_list.append(player_entry)
+
+        # We return all of the appended entries into the list
+        return player_list
+
+    #Close the db_connection when all the operations have been realised.
+    finally:
+        db_connection.close()
