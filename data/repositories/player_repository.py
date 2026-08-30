@@ -251,3 +251,45 @@ def update_player_attributes(player_id: int, player_name = None, player_type = N
     # After either the succesful commit or rollback of updated entries, we close the connection
     finally:
         db_connection.close()
+
+"""Function to get all players of one type when called"""
+def get_players_by_type(player_type: PlayerType):
+
+    """We first establish a db connection"""
+    db_connection = get_connection()
+
+    """We create the play_cursor to naviguate and manipulate the player table"""
+    player_cursor = db_connection.cursor()
+
+    """We try to get a list of all the players with the same player_type"""
+    try:
+        player_cursor.execute(
+            """
+            SELECT player_id, player_name, player_type, join_date, current_elo
+            FROM Cafe_Player
+            WHERE player_type = ? 
+            """, 
+            (player_type.value,) #value is called here because we need one of the instance of PlayerType enum class
+        )
+
+        """We fetch all players of one inputed type"""
+        player_entries = player_cursor.fetchall()
+
+        """We create an empty list to append all players with the same type into"""
+        player_type_list = []
+
+        for player_row in player_entries:
+            player_entry = Player(
+                player_row["player_id"],
+                player_row["player_name"],
+                PlayerType(player_row["player_type"]),
+                datetime.fromisoformat(player_row["join_date"]),
+                player_row["current_elo"])
+            player_type_list.append(player_entry)
+
+        """We return the list of all players of the same type oran empty list if there are none."""
+        return player_type_list
+    
+    finally:
+        db_connection.close()
+
