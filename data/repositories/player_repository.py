@@ -175,3 +175,79 @@ def get_all_players():
     #Close the db_connection when all the operations have been realised.
     finally:
         db_connection.close()
+
+"""We use None on player_name, player_type and current_elo to indicate that these are optional fields to update""" 
+def update_player_attributes(player_id: int, player_name = None, player_type = None, current_elo = None):
+
+    """ We first establish db connection"""
+    db_connection = get_connection()
+
+    """We create the play_cursor to naviguate and manipulate the player table"""
+    player_cursor = db_connection.cursor()
+
+    """We build an empty list to which we will append the original and updated values"""
+    values= []
+
+    """We build a second list to append all updated field entries"""
+    updated_field_entries = []
+
+    """Conditionnal block to check if the user updated/changed player name entry"""
+    if player_name is not None:
+        updated_field_entries.append("player_name = ?")
+        values.append(player_name)
+
+    """Conditionnal block to check if the user updated/changed current elo entry"""
+    if current_elo is not None:       
+        updated_field_entries.append("current_elo = ?")
+        values.append(current_elo)
+
+    """Conditionnal block to check if the user updated/changed player type entry"""
+    if player_type is not None:
+        updated_field_entries.append("player_type = ?")
+        values.append(player_type.value) # We need value here for the instances of PlayerType class
+
+    """We verify after our 3 conditionnals that the values list actually have values in them otherwise we raise an error"""
+    if len(values) == 0:
+        raise ValueError(f"No fields were updated for player with player ID {player_id}")
+    
+    """We join all updated_field_entries list elements as a single string to avoid hardcoding the SET clause"""
+    new_fields = ", ".join(updated_field_entries)
+    
+    """
+        We append player_id at the end of values so that our WHERE condition 
+        to identify the player whose entries need updates work.
+    """
+    values.append(player_id)
+    
+    try:
+
+        player_cursor.execute(
+            f"""
+            UPDATE Cafe_Player
+            SET {new_fields}
+            WHERE player_id = ?
+            """, tuple(values) # Convert values list to a tuple for best practice and to make updated values immutable
+        )
+
+        """rowcount allows us to ssee the number of rows affected by the changes"""
+        updated_player = player_cursor.rowcount
+
+        """If 0 updated_player were affected (or invalid player_id), nothing was updated on our player entry"""
+        if updated_player == 0:
+            raise ValueError(f"Player with ID {player_id} had no fields updated")
+            
+        #If updated_player was updated we commit the changes to db_connection
+        else:
+            db_connection.commit()
+            print(f"Player with ID {player_id} had its attributes succesfully updated!")
+            return updated_player
+    
+    #If there is any exceptions that occur during the commit, we raise an exception and perform a rollback
+    except Exception as e:
+        db_connection.rollback()
+        print(f"Failed to update player {e}")
+        raise
+
+    # After either the succesful commit or rollback of updated entries, we close the connection
+    finally:
+        db_connection.close()
