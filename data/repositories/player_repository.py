@@ -64,7 +64,6 @@ def get_player_by_id(player_id: int):
     """
 
     try:
-
         player_cursor.execute(
             """
             SELECT player_id, player_name, player_type, join_date, current_elo
@@ -182,7 +181,7 @@ def update_player_attributes(player_id: int, player_name = None, player_type = N
     """ We first establish db connection"""
     db_connection = get_connection()
 
-    """We create the play_cursor to naviguate and manipulate the player table"""
+    """We create the player_cursor to naviguate and manipulate the player table"""
     player_cursor = db_connection.cursor()
 
     """We build an empty list to which we will append the original and updated values"""
@@ -293,3 +292,81 @@ def get_players_by_type(player_type: PlayerType):
     finally:
         db_connection.close()
 
+def get_leaderboard(): 
+
+    """We first establish a database connection"""
+    db_connection = get_connection()
+
+    """We then create a cursor object for future SQL operations"""
+    player_cursor = db_connection.cursor()
+
+    """We now try to select all players and order them from most elo to least elo points"""
+    try:
+
+        player_cursor.execute(
+            """
+            SELECT player_id, player_name, player_type, join_date, current_elo
+            FROM Cafe_Player
+            ORDER BY current_elo DESC, player_id ASC 
+            """ #ORDER BY and DESC allows us to order all player entries from most current_elo to least current elo
+        )
+
+        """ We assign a new variable (player_repository) where the cursor fetches all player entries"""
+        player_repository = player_cursor.fetchall()
+
+        """We create an empty list to append all player entries """
+        player_list = []
+
+        for player_row in player_repository:
+            player_entry = Player(
+                player_row["player_id"],
+                player_row["player_name"],
+                PlayerType(player_row["player_type"]),
+                datetime.fromisoformat(player_row["join_date"]),
+                player_row["current_elo"]
+            )
+            player_list.append(player_entry)
+
+        return player_list
+
+    finally: 
+        db_connection.close()
+
+def get_player_by_name(player_name: str):
+
+    """We first establish a database connection"""
+    db_connection = get_connection()
+
+    """We then create a cursor object that will find our player by name"""
+    player_cursor = db_connection.cursor()
+
+    """We try to fetch all matching results with the same name"""
+    try:
+
+        player_cursor.execute(
+            """
+            SELECT player_id, player_name, player_type, join_date, current_elo
+            FROM Cafe_Player
+            WHERE player_name = ?
+            """,
+            (player_name,)
+        )
+
+        player_entries = player_cursor.fetchall()  # We fetch all matching results
+
+        player_list = []
+
+        for player_entry in player_entries:
+            player_row = Player(
+                player_entry["player_id"],
+                player_entry["player_name"],
+                PlayerType(player_entry["player_type"]),
+                datetime.fromisoformat(player_entry["join_date"]),
+                player_entry["current_elo"]
+            )
+            player_list.append(player_row)  # now correctly inside the loop
+
+        return player_list  # empty list if nobody matched, consistent with get_all_players / get_players_by_type
+
+    finally:
+        db_connection.close()
