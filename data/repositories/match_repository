@@ -85,3 +85,36 @@ def get_match_by_id (match_id: int):
         
     finally:
         db_connection.close()
+
+def delete_match_by_id (match_id: int):
+
+    """We first establish a db connection"""
+    db_connection = get_connection()
+
+    """We create the match_cursor to naviguate and manipulate the match table"""
+    match_cursor = db_connection.cursor()
+
+    """ We try to delete the player entry using the ID"""
+    try: 
+        match_cursor.execute(
+            """
+            DELETE FROM Cafe_player
+            WHERE match_id = ?
+            """,
+            (match_id)
+        )
+
+        """Row count allows us to see all entries with the inputed ID"""
+        row_affected = match_cursor.rowcount
+
+        if row_affected == 0:
+            raise ValueError(f"No match found with match id {match_id}")
+        
+        else:
+            db_connection.commit()
+            print(f"Match deleted succesfully!")
+            return row_affected
+
+    # We finish by closing the connection 
+    finally:
+        db_connection.close()
