@@ -1,0 +1,87 @@
+from data.db import get_connection
+from datetime import datetime
+from domains.match import Match
+
+"""Function to save match entries to db"""
+def save_match_entry(match_entry: Match):
+
+    """We first establish the db connection"""
+    db_connection = get_connection()
+
+    """We create the match_cursor to navigate and manipulate the match table"""
+    match_cursor = db_connection.cursor()
+
+    """We insert the object using the .execute() method and the match_cursor"""
+
+    """
+    We try to do an INSERT STATEMENT WITH ALL SQL ATTRIBUTES.
+    Then we add Values as (?, ?, ?, ?) since we are working with sqlite
+    We then give the proper domain class fields to be entered
+    """
+
+    try:
+        match_cursor.execute("""
+        INSERT INTO Cafe_player (match_id, event_id, schedueled_match_time)
+        VALUES (?, ?, ?)
+        """,
+        (
+            match_entry.match_id,
+            match_entry.event_id,
+            match_entry.schedule_match_time
+        )
+    )
+        #We use the lastrowid functionality on the cursor to obtain the last generated ID from our match entry 
+        new_match = match_cursor.lastrowid
+
+        # We save the changes to the db
+        db_connection.commit()
+        print("New match entry saved succesfully!")
+        return new_match
+    
+    except Exception as e:
+        #should there be any error we rollback and dont commit to db
+        db_connection.rollback()
+        print(f"Failed to insert match: {e}")
+        raise 
+
+    finally:
+        db_connection.close()
+
+def get_match_by_id (match_id: int):
+
+    """We first establish a db connection"""
+    db_connection = get_connection()
+
+    """We create the match_cursor to naviguate and manipulate the match table"""
+    match_cursor = db_connection.cursor()
+
+    """ 
+    We find the matching data row with the ID.
+    We must first use an SQL SELECT STATEMENT and add a 
+    conditionnal WHERE clause
+    """
+    try:
+        match_cursor.execute(
+            """
+            SELECT match_id, event_id, schedueled_match_time
+            FROM Cafe_Player
+            WHERE match_id = ?
+            """,
+            (match_id)
+        )
+        #We fetch the one matching row
+        matching_row = match_cursor.fetchone()
+
+        if matching_row is not None:
+            matching_entry = Match(
+               matching_row["match_id"],
+               matching_row["event_id"],
+               matching_row["schedueled_match_time"]
+           ) 
+            return matching_entry
+    
+        else:
+           raise ValueError(f"No match found with {match_id}")
+        
+    finally:
+        db_connection.close()
