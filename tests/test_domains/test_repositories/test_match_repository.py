@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 
 from domains.match import Match
+from domains.event import Event, EventType
 from data.repositories.match_repository import save_match_entry, get_match_by_id, delete_match_by_id, get_all_matches, get_match_by_event_id, get_all_matches_by_time
 
 class TestMatchRepository(unittest.TestCase):
@@ -31,9 +32,12 @@ class TestMatchRepository(unittest.TestCase):
         )
         self.patcher.start()
 
+        event = Event( 1, "Mario Bros 3 Speedrun", EventType.RANKED_LEAGUE_MATCH, "Super Mario Brothers 3", 50, datetime(2020, 10, 10))
+        # before testing the match repository you need to create the event repository as its a foreign key in this table
+
     def get_test_connection(self):
         connection = sqlite3.connect(self.db_path)
-        connection.execute("PRAGMA foreign keys = ON")
+        connection.execute("PRAGMA foreign_keys = ON")
         connection.row_factory = sqlite3.Row
         return connection 
 
@@ -60,3 +64,11 @@ class TestMatchRepository(unittest.TestCase):
         match = Match(0, 1, datetime(2020, 10, 10))
         saved_match = save_match_entry(match)
         self.assertIsNotNone(saved_match)
+
+    def test_get_match_by_id(self):
+        match = Match(1, 1, datetime(2020, 10, 10))
+        saved_match = save_match_entry(match)
+        fetched_match = get_match_by_id(saved_match)
+        self.assertIsNotNone(fetched_match)
+        self.assertEqual(fetched_match.event_id, match.event_id)
+        self.assertEqual(fetched_match.schedule_match_time, match.schedule_match_time)
