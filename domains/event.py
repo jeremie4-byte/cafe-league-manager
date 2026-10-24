@@ -1,6 +1,6 @@
 from enum import Enum
-from datetime import datetime
-from services.validators import *
+from datetime import date
+from services.validators import validate_positive_id, validate_min_name_length, validate_event_capacity, validate_event_date
 
 """Creating an Enum class for all different SQL event_type"""
 class EventType(Enum):
@@ -10,7 +10,7 @@ class EventType(Enum):
 
 """Creating Event class with all SQL attributes"""
 class Event:
-    def __init__(self, event_id, event_name, event_type: EventType, game_title, event_capacity, event_date: datetime):
+    def __init__(self, event_id, event_name, event_type: EventType, game_title, event_capacity, event_date: date):
         self.event_id = validate_positive_id(event_id)
         self.event_name = validate_min_name_length(event_name)
         if not isinstance(event_type, EventType):
@@ -18,4 +18,4 @@ class Event:
         self.event_type = event_type
         self.game_title = validate_min_name_length(game_title)
         self.event_capacity = validate_event_capacity(event_capacity)
-        self.event_date = validate_datetime_format(event_date)
+        self.event_date = validate_event_date(event_date)
