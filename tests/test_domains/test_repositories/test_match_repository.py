@@ -8,7 +8,7 @@ from datetime import datetime
 
 from domains.match import Match
 from domains.event import Event, EventType
-from data.repositories.match_repository import save_match_entry, get_match_by_id, delete_match_by_id, get_all_matches, get_match_by_event_id, get_all_matches_by_time
+from data.repositories.match_repository import save_match_entry, get_match_by_id, delete_match_by_id, get_all_matches, get_all_matches_by_event_id, get_all_matches_by_date_and_time
 
 class TestMatchRepository(unittest.TestCase):
 
@@ -33,7 +33,8 @@ class TestMatchRepository(unittest.TestCase):
         self.patcher.start()
 
         event = Event( 1, "Mario Bros 3 Speedrun", EventType.RANKED_LEAGUE_MATCH, "Super Mario Brothers 3", 50, datetime(2020, 10, 10))
-        # before testing the match repository you need to create the event repository as its a foreign key in this table
+        # before testing the match repository you need to create the event repository as its a foreign key in this table, just do save_event() 
+        # change datetime format of schedule_match time to time...
 
     def get_test_connection(self):
         connection = sqlite3.connect(self.db_path)
