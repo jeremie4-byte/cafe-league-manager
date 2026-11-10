@@ -1,7 +1,7 @@
 from data.db import get_connection
-from datetime import date
+from datetime import datetime, date
 from domains.event import Event, EventType
-from services.validators import validate_event_date
+from services.validators import validate_event_date, validate_event_capacity
 
 def save_event_entry(event_entry: Event):
     """We first establish the db connection"""
@@ -317,7 +317,80 @@ def get_event_by_game_title(game_title: str):
         return event_list
 
     finally:
-        db_connection.close()     
+        db_connection.close()   
+
+def get_event_by_capacity(min_capacity: int | None = None, max_capacity: int | None = None):  
+
+    values=[]
+    conditions=[]
+
+    if min_capacity is not None: 
+        validate_event_capacity(min_capacity)
+        conditions.append("event_capacity >= ?")
+        values.append(min_capacity)
+
+    if max_capacity is not None:
+        validate_event_capacity(max_capacity)
+        conditions.append("event_capacity <= ?")
+        values.append(max_capacity)
+
+    if min_capacity is None and max_capacity is None:
+        raise ValueError("Please input the conditions of the event.")
+    
+    if min_capacity is None:
+        print("Minimum capacity not entered, defaulting to 0")
+        min_capacity = 0
+        conditions.append("event_capacity >= ?")
+        values.append(min_capacity)
+
+    if max_capacity is None:
+        print("Maximum capacity not entered, defaulting to 100.")
+        max_capacity = 100
+        conditions.append("event_capacity <= ?")
+        values.append(max_capacity)
+
+    if min_capacity > max_capacity:
+        raise ValueError(f"Minimum value of {min_capacity} cannot exceed {max_capacity}")
+    
+    where_clause = " AND ".join(conditions)
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            f"""
+            SELECT event_id, event_name, event_type, game_title, event_capacity, event_date
+            FROM Cafe_event
+            WHERE {where_clause}
+            """,
+            tuple(values,)
+        )
+
+        events_in_conditions = event_cursor.fetchall()
+
+        event_list = []
+
+        for event in events_in_conditions:
+            event_entry = Event(
+                event["event_id"],
+                event["event_name"],
+                EventType(event["event_type"]),
+                event["game_title"],
+                event["event_capacity"],
+                date.fromisoformat(event["event_date"])
+            )
+            event_list.append(event_entry)
+
+        return event_list
+    
+    except Exception as e:
+        db_connection.rollback()
+        print(f"Failed to fetch all events within the range because of error {e}")
+        raise
+
+    finally:
+        db_connection.close()
 
 def get_event_by_date(event_date: date):
 
@@ -343,6 +416,101 @@ def get_event_by_date(event_date: date):
 
         for event in event_date_entries:
             event_entry= Event(
+                event["event_id"],
+                event["event_name"],
+                EventType(event["event_type"]),
+                event["game_title"],
+                event["event_capacity"],
+                date.fromisoformat(event["event_date"])
+            )
+            event_list.append(event_entry)
+
+        return event_list
+    
+    finally:
+        db_connection.close()
+
+def get_upcoming_events(event_date: date | None = None):
+
+    if event_date is None:
+        event_date = date.today()
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT event_id, event_name, event_type, game_title, event_capacity, event_date
+            FROM Cafe_Event
+            WHERE event_date >= ?
+            ORDER BY event_date, event_id ASC
+            """,
+            (event_date.isoformat(),)
+        )
+
+        upcoming_events = event_cursor.fetchall()
+        event_list = []
+
+        for upcoming_event in upcoming_events:
+            event_entry = Event(
+            upcoming_event["event_id"],
+            upcoming_event["event_name"],
+            EventType(upcoming_event["event_type"]),
+            upcoming_event["game_title"],
+            upcoming_event["event_capacity"],
+            date.fromisoformat(upcoming_event["event_date"])
+            )
+            event_list.append(event_entry)
+
+        return event_list
+
+    finally:
+        db_connection.close()
+
+def get_events_by_date_range(start_date: date | None = None, end_date: date | None = None):
+
+    values = []
+    conditions = []
+
+    if start_date is None and end_date is None: 
+        raise ValueError("Please provide a start date, an end date or both.")
+    
+    if start_date is not None:
+        validate_event_date(start_date)
+        conditions.append("event_date >= ?")
+        values.append(start_date.isoformat())
+
+    if end_date is not None:
+        validate_event_date(end_date)
+        conditions.append("event_date <= ?")
+        values.append(end_date.isoformat())
+
+    if  start_date is not None and end_date is not None and end_date < start_date :
+        raise ValueError("End date cannot be smaller than the start date")
+    
+    where_clause = " AND ".join(conditions)
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            f"""
+            SELECT event_id, event_name, event_type, game_title, event_capacity, event_date
+            FROM Cafe_event
+            WHERE {where_clause}
+            ORDER BY event_date, event_id ASC
+            """,
+            tuple(values,)
+        )
+
+        date_range = event_cursor.fetchall()
+
+        event_list = []
+
+        for event in date_range:
+            event_entry = Event(
                 event["event_id"],
                 event["event_name"],
                 EventType(event["event_type"]),
