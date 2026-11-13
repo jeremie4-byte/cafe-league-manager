@@ -587,3 +587,42 @@ def get_next_event(from_date: date | None = None):
     
     finally:
         db_connection.close()
+
+def get_past_events(event_date: date | None = None):
+
+    if event_date is None:
+        event_date = date.today()
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT event_id, event_name, event_type, game_title, event_capacity, event_date
+            FROM Cafe_Event
+            WHERE event_date < ?
+            ORDER BY event_date DESC, event_id ASC
+            """,
+            (event_date.isoformat(),)
+        )
+    
+        past_events = event_cursor.fetchall()
+
+        past_events_list = []
+
+        for past_event in past_events:
+            event_entry = Event(
+            past_event["event_id"],
+            past_event["event_name"],
+            EventType(past_event["event_type"]),
+            past_event["game_title"],
+            past_event["event_capacity"],
+            date.fromisoformat(past_event["event_date"])
+            )
+            past_events_list.append(event_entry)
+
+        return past_events_list
+
+    finally:
+        db_connection.close()
