@@ -524,3 +524,66 @@ def get_events_by_date_range(start_date: date | None = None, end_date: date | No
     
     finally:
         db_connection.close()
+
+def event_exists(event_name: str):
+
+    """We first establish the db connection"""
+    db_connection = get_connection()
+
+    """We create the event_cursor to navigate and manipulate the event table"""
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT 1
+            FROM Cafe_Event
+            WHERE event_name = ?
+            """,
+            (event_name,)
+        )
+
+        # fetchone() gives a row if there's a match and None if there isn't
+        return event_cursor.fetchone() is not None
+
+    finally:
+        db_connection.close()
+
+def get_next_event(from_date: date | None = None):
+
+    if from_date is None:
+        from_date = date.today()
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT event_id, event_name, event_type, game_title, event_capacity, event_date
+            FROM Cafe_Event
+            WHERE event_date >= ?
+            ORDER BY event_date, event_id ASC 
+            LIMIT 1 
+            """,
+            (from_date.isoformat(),)
+        )
+
+        next_event = event_cursor.fetchone()
+
+        if next_event is not None:
+            event = Event(
+                next_event["event_id"],
+                next_event["event_name"],
+                EventType(next_event["event_type"]),
+                next_event["game_title"],
+                next_event["event_capacity"],
+                date.fromisoformat(next_event["event_date"])
+            )
+            return event
+        
+        else:
+            return None
+    
+    finally:
+        db_connection.close()
