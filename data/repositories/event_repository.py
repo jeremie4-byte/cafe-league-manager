@@ -626,3 +626,129 @@ def get_past_events(event_date: date | None = None):
 
     finally:
         db_connection.close()
+
+def search_events_by_name(keyword: str):
+
+    if keyword.strip() == "":
+        raise ValueError("Please enter a search keyword")
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT event_id, event_name, event_type, game_title, event_capacity, event_date
+            FROM Cafe_Event
+            WHERE event_name LIKE ?
+            ORDER BY event_date, event_id 
+            """, (f"%{keyword}%",)
+        )
+
+        keyword_list = event_cursor.fetchall()
+
+        event_list = []
+
+        for event in keyword_list:
+            event_entry = Event(
+                event["event_id"],
+                event["event_name"],
+                EventType(event["event_type"]),
+                event["game_title"],
+                event["event_capacity"],
+                date.fromisoformat(event["event_date"])
+            )
+            event_list.append(event_entry)
+
+        return event_list
+    
+    finally:
+        db_connection.close()
+
+def count_events_by_type():
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT event_type, COUNT (*) AS event_count
+            FROM Cafe_Event
+            GROUP BY event_type
+            """
+        )
+
+        event_type_list = event_cursor.fetchall()
+
+        event_type_dict = {}
+
+        for event_type_entry in event_type_list:
+             event_type_dict[EventType(event_type_entry["event_type"])] = event_type_entry["event_count"]
+        return event_type_dict
+    
+    finally:
+        db_connection.close()
+
+def get_busiest_game_titles(limit=50):
+
+    MIN_LIMIT = 1
+    MAX_LIMIT = 50
+
+    if not isinstance(limit, int):
+        raise TypeError(f"Value must be a number from {MIN_LIMIT} to {MAX_LIMIT}")
+
+    if limit < MIN_LIMIT or limit > MAX_LIMIT:
+        raise ValueError(f"Please select a value from {MIN_LIMIT} to {MAX_LIMIT}")
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT game_title, COUNT(*) AS game_count
+            FROM Cafe_Event
+            GROUP BY game_title
+            ORDER BY game_count DESC, game_title ASC
+            LIMIT ?
+            """, (limit,)
+        )
+
+        busiest_game_list = event_cursor.fetchall()
+
+        busiest_game_dict = {}
+
+        for busy_game in busiest_game_list:
+            busiest_game_dict[busy_game["game_title"]] = busy_game["game_count"]
+        return busiest_game_dict
+    
+    finally:
+        db_connection.close()
+
+def get_average_capacity():
+
+    db_connection = get_connection()
+    event_cursor = db_connection.cursor()
+
+    try:
+        event_cursor.execute(
+            """
+            SELECT AVG(event_capacity) AS average_capacity 
+            FROM Cafe_Event
+            """
+        )
+
+        average = event_cursor.fetchone()
+        event_capacity_average = average["average_capacity"]
+
+        if event_capacity_average is None:
+            print("No capacities have been registered so no average was returned")
+            return None
+
+        else:
+            rounded_capacity_average = round(event_capacity_average)
+            return rounded_capacity_average
+        
+    finally:
+        db_connection.close()
