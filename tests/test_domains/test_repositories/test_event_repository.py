@@ -106,3 +106,33 @@ class TestEventRepository(unittest.TestCase):
     def test_get_event_by_missing_id(self):
         with self.assertRaises(ValueError):
             get_event_by_id(999)  
+
+        def test_get_all_events(self):
+        event_1 = self.helper_event()
+        event_2 = self.helper_event(
+            event_id= 2,
+            event_name= "Super Mario Bros. 2 Championship",
+            game_title= "Super Mario Bros. 2"
+        ) 
+        event_3 = self.helper_event(
+            event_id= 3,
+            event_name= "Super Mario Bros. 3 Championship",
+            game_title= "Super Mario Bros. 3"
+        )
+        saved_event_1 = save_event_entry(event_1)
+        saved_event_2 = save_event_entry(event_2)
+        saved_event_3 = save_event_entry(event_3)
+        fetched_events = get_all_events()
+        self.assertEqual(len(fetched_events), 3)
+        events = [event_1, event_2, event_3]
+        names = set()
+        for event in fetched_events:
+            names.add(event.event_name)
+        for fetched_event in events:
+            with self.subTest(fetched_event.event_name):
+                self.assertIn(fetched_event.event_name, names)
+
+    def test_get_empty_events_list(self):
+        fetched_events = get_all_events()
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 0)
