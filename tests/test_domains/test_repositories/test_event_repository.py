@@ -180,3 +180,27 @@ class TestEventRepository(unittest.TestCase):
         self.assertEqual(rows_deleted, 1)
         with self.assertRaises(ValueError):
             delete_event_by_id(event_id)
+
+    def test_update_event_name(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        new_name = "Mario Bros. 2 Championship"
+        update_event_attributes(saved_event, 
+                                new_name
+                            )
+        updated_event = get_event_by_id(saved_event)
+        self.assertNotEqual(updated_event.event_name, event.event_name)
+        self.assertEqual(updated_event.event_name, new_name)
+        self.assertEqual(updated_event.event_capacity, event.event_capacity)
+
+    def test_update_game_title(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        new_game_title= "Mario Kart CTGP"
+        update_event_attributes( saved_event,
+                                 game_title= new_game_title
+                                )
+        updated_event= get_event_by_id(saved_event)
+        self.assertNotEqual(event.game_title, updated_event.game_title)
+        self.assertEqual(updated_event.game_title, new_game_title)
+        self.assertEqual(updated_event.event_capacity, event.event_capacity)
