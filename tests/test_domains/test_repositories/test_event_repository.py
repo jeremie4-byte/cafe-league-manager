@@ -136,3 +136,47 @@ class TestEventRepository(unittest.TestCase):
         fetched_events = get_all_events()
         self.assertIsNotNone(fetched_events)
         self.assertEqual(len(fetched_events), 0)
+
+    def test_delete_event_by_id(self):
+        event = self.helper_event()
+        event_id = save_event_entry(event)
+        deleted_event = delete_event_by_id(event_id)
+        self.assertTrue(deleted_event)
+        with self.assertRaises(ValueError):
+            get_event_by_id(event_id)
+
+    def test_delete_nonexistant_event_by_id(self):
+        with self.assertRaises(ValueError):
+            delete_event_by_id(999)
+
+    def test_delete_middle_list_event(self):
+        event_1 = self.helper_event()
+        event_2 = self.helper_event(
+            event_id= 2,
+            event_name= "Super Mario Bros. 2 Championship",
+            game_title= "Super Mario Bros. 2"
+        ) 
+        event_3 = self.helper_event(
+            event_id= 3,
+            event_name= "Super Mario Bros. 3 Championship",
+            game_title= "Super Mario Bros. 3"
+        )
+        save_event_entry(event_1)
+        saved_event_2 = save_event_entry(event_2)
+        save_event_entry(event_3)
+        delete_event_by_id(saved_event_2)
+        fetched_events = get_all_events()
+        self.assertEqual(len(fetched_events), 2)
+        names = set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertEqual(names, {event_1.event_name, event_3.event_name})
+        self.assertNotIn(event_2.event_name, names)
+
+    def test_delete_same_id(self):
+        event = self.helper_event()
+        event_id = save_event_entry(event)
+        rows_deleted = delete_event_by_id(event_id)
+        self.assertEqual(rows_deleted, 1)
+        with self.assertRaises(ValueError):
+            delete_event_by_id(event_id)
