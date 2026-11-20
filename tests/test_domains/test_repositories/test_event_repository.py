@@ -107,7 +107,7 @@ class TestEventRepository(unittest.TestCase):
         with self.assertRaises(ValueError):
             get_event_by_id(999)  
 
-        def test_get_all_events(self):
+    def test_get_all_events(self):
         event_1 = self.helper_event()
         event_2 = self.helper_event(
             event_id= 2,
