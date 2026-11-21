@@ -363,3 +363,31 @@ class TestEventRepository(unittest.TestCase):
         )
         unchanged_event= get_event_by_id(saved_event)
         self.assertEqual(unchanged_event.event_name, event.event_name)
+
+    def test_get_event_by_name(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_event= get_event_by_name(event_2.event_name)
+        self.assertEqual(event_2.event_id, fetched_event.event_id)
+        self.assertEqual(event_2.event_name, fetched_event.event_name)
+        self.assertEqual(event_2.game_title, fetched_event.game_title)
+        self.assertEqual(event_2.event_capacity, fetched_event.event_capacity)
+        self.assertEqual(event_2.event_date, fetched_event.event_date)
