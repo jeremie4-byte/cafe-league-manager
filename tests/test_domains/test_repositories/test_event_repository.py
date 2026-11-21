@@ -4,7 +4,7 @@ import os
 import sqlite3
 import tempfile
 from pathlib import Path
-from datetime import date
+from datetime import date, datetime
 
 from services.validators import validate_event_date, validate_event_capacity
 from domains.event import Event, EventType
@@ -193,6 +193,19 @@ class TestEventRepository(unittest.TestCase):
         self.assertEqual(updated_event.event_name, new_name)
         self.assertEqual(updated_event.event_capacity, event.event_capacity)
 
+    def test_update_event_type(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        new_event_type= EventType.RANKED_LEAGUE_MATCH
+        update_event_attributes(
+            saved_event,
+            event_type= new_event_type
+        )
+        updated_event= get_event_by_id(saved_event)
+        self.assertNotEqual(event.event_type, updated_event.event_type)
+        self.assertEqual(updated_event.event_type, new_event_type)
+        self.assertEqual(event.event_capacity, updated_event.event_capacity)
+
     def test_update_game_title(self):
         event= self.helper_event()
         saved_event= save_event_entry(event)
@@ -204,3 +217,149 @@ class TestEventRepository(unittest.TestCase):
         self.assertNotEqual(event.game_title, updated_event.game_title)
         self.assertEqual(updated_event.game_title, new_game_title)
         self.assertEqual(updated_event.event_capacity, event.event_capacity)
+
+    def test_update_event_capacity(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        new_event_capacity = 4
+        update_event_attributes(
+            saved_event,
+            event_capacity= new_event_capacity
+        )
+        updated_event= get_event_by_id(saved_event)
+        self.assertNotEqual(event.event_capacity, updated_event.event_capacity)
+        self.assertEqual(updated_event.event_capacity, new_event_capacity)
+        self.assertEqual(event.event_name, updated_event.event_name)
+
+    def test_update_event_date(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        new_event_date= date(2026, 11, 11)
+        update_event_attributes(
+            saved_event,
+            event_date= new_event_date
+        )
+        updated_event = get_event_by_id(saved_event)
+        self.assertNotEqual(event.event_date, updated_event.event_date)
+        self.assertEqual(updated_event.event_date, new_event_date)
+        self.assertEqual(event.event_capacity, updated_event.event_capacity)
+
+    def test_update_all_attributes(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        new_event_name = "Super Mario Bros. Evening"
+        new_event_type = EventType.OPEN_GAME_NIGHT
+        new_game_title= "Super Mario Bros."
+        new_event_capacity= 100
+        new_event_date = date(2026, 1, 1)
+        update_event_attributes(
+            saved_event,
+            event_name= new_event_name,
+            event_type= new_event_type,
+            game_title= new_game_title,
+            event_capacity= new_event_capacity,
+            event_date= new_event_date
+        )
+        updated_event= get_event_by_id(saved_event)
+        self.assertNotEqual(event.event_name, updated_event.event_name)
+        self.assertEqual(updated_event.event_name, new_event_name)
+        self.assertEqual(updated_event.event_type, new_event_type)
+        self.assertEqual(updated_event.game_title, new_game_title)
+        self.assertEqual(updated_event.event_capacity, new_event_capacity)
+        self.assertEqual(updated_event.event_date, new_event_date)
+
+    def test_update_event_no_fields(self):
+        event = self.helper_event()
+        saved_event= save_event_entry(event)
+        with self.assertRaises(ValueError):
+            update_event_attributes(saved_event)
+        unchanged_event= get_event_by_id(saved_event)
+        self.assertEqual(unchanged_event.event_name, event.event_name)
+
+    def test_update_event_missing_id(self):
+        event = self.helper_event()
+        saved_event = save_event_entry(event)
+        with self.assertRaises(ValueError):
+            update_event_attributes(999, event_name="The Legend of Zelda: Ocarina of Time")
+        unchanged_event = get_event_by_id(saved_event)
+        self.assertEqual(unchanged_event.event_name, event.event_name)
+
+    def test_update_event_with_duplicate_name(self):
+        event_1= self.helper_event()
+        event_2= Event(
+            event_id= 2,
+            event_name="Mario Kart Double Dash Grand Prix Championship",
+            event_type=EventType.TOURNAMENT_MATCH,
+            game_title="Mario Kart Wii",
+            event_capacity=2,
+            event_date=date(2026, 12, 12),
+        )
+        saved_event_1 = save_event_entry(event_1)
+        saved_event_2 = save_event_entry(event_2)
+        with self.assertRaises(sqlite3.IntegrityError):
+            update_event_attributes(
+                saved_event_2,
+                event_name= event_1.event_name
+            )
+        unchanged_event= get_event_by_id(saved_event_2)
+        self.assertEqual(unchanged_event.event_name, event_2.event_name)
+
+    def test_update_event_with_bad_capacity(self):
+        event_1= self.helper_event()
+        event_2= Event(
+            event_id= 2,
+            event_name="Mario Kart Double Dash Grand Prix Championship",
+            event_type=EventType.TOURNAMENT_MATCH,
+            game_title="Mario Kart Wii",
+            event_capacity=2,
+            event_date=date(2026, 12, 12),
+        )
+        saved_event_1 = save_event_entry(event_1)
+        saved_event_2 = save_event_entry(event_2)
+        with self.assertRaises(sqlite3.IntegrityError):
+            update_event_attributes(
+                saved_event_2,
+                event_capacity= -2
+            )
+        with self.assertRaises(sqlite3.IntegrityError):
+            update_event_attributes(
+                saved_event_2,
+                event_capacity= 101
+            )
+        with self.assertRaises(sqlite3.IntegrityError):
+            update_event_attributes(
+                saved_event_2,
+                event_capacity= 0
+            )
+        unchanged_event= get_event_by_id(saved_event_2)
+        self.assertEqual(unchanged_event.event_capacity, event_2.event_capacity)
+
+    def test_update_event_with_bad_date(self):
+        event_1= self.helper_event()
+        event_2= Event(
+            event_id= 2,
+            event_name="Mario Kart Double Dash Grand Prix Championship",
+            event_type=EventType.TOURNAMENT_MATCH,
+            game_title="Mario Kart Wii",
+            event_capacity=2,
+            event_date=date(2026, 12, 12),
+        )
+        saved_event_1 = save_event_entry(event_1)
+        saved_event_2 = save_event_entry(event_2)
+        with self.assertRaises(TypeError):
+            update_event_attributes(
+                saved_event_2,
+                event_date= datetime(2026, 10, 10)
+            )
+        unchanged_event= get_event_by_id(saved_event_2)
+        self.assertEqual(unchanged_event.event_date, event_2.event_date)
+
+    def test_update_to_the_same_value(self):
+        event= self.helper_event()
+        saved_event= save_event_entry(event)
+        update_event_attributes(
+            saved_event,
+            event_name= "Mario Kart Wii Grand Prix Championship"
+        )
+        unchanged_event= get_event_by_id(saved_event)
+        self.assertEqual(unchanged_event.event_name, event.event_name)
