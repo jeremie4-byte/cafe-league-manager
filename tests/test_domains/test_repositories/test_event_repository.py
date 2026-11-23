@@ -275,6 +275,8 @@ class TestEventRepository(unittest.TestCase):
             update_event_attributes(saved_event)
         unchanged_event= get_event_by_id(saved_event)
         self.assertEqual(unchanged_event.event_name, event.event_name)
+        self.assertEqual(unchanged_event.event_capacity, event.event_capacity)
+
 
     def test_update_event_missing_id(self):
         event = self.helper_event()
@@ -364,6 +366,38 @@ class TestEventRepository(unittest.TestCase):
         unchanged_event= get_event_by_id(saved_event)
         self.assertEqual(unchanged_event.event_name, event.event_name)
 
+    def test_update_event_only_changes_target_row(self):
+        event_1 = self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        update_event_attributes(
+            saved_event_2,
+            event_capacity= 50
+        )
+        unchanged_event_1= get_event_by_id(saved_event_1)
+        changed_event_2= get_event_by_id(saved_event_2)
+        unchanged_event_3= get_event_by_id(saved_event_3)
+        self.assertEqual(unchanged_event_1.event_capacity, event_1.event_capacity)
+        self.assertEqual(changed_event_2.event_capacity, 50)
+        self.assertEqual(unchanged_event_3.event_capacity, event_3.event_capacity)
+
     def test_get_event_by_name(self):
         event_1= self.helper_event()
         event_2 = Event(
@@ -391,3 +425,402 @@ class TestEventRepository(unittest.TestCase):
         self.assertEqual(event_2.game_title, fetched_event.game_title)
         self.assertEqual(event_2.event_capacity, fetched_event.event_capacity)
         self.assertEqual(event_2.event_date, fetched_event.event_date)
+
+    def test_get_event_by_missing_name(self):
+        event= self.helper_event()
+        save_event_entry(event)
+        with self.assertRaises(ValueError):
+            get_event_by_name("Non Existant Event")
+
+    def test_get_event_by_type(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_events = get_event_by_type(EventType.RANKED_LEAGUE_MATCH)
+        self.assertEqual(len(fetched_events), 2)
+        names= set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_1.event_name, names)
+        events= [event_2, event_3]
+        for event in events:
+            with self.subTest(event_name=event.event_name):
+                self.assertIn(event.event_name, names)
+
+    def test_get_empty_event_type_list(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_events= get_event_by_type(EventType.OPEN_GAME_NIGHT)
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 0)
+
+    def test_get_events_by_game_title(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_events= get_event_by_game_title(event_2.game_title)
+        self.assertEqual(len(fetched_events), 2)
+        names= set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_1.event_name, names)
+        events= [event_2, event_3]
+        for event in events:
+            with self.subTest(event_name=event.event_name):
+                self.assertIn(event.event_name, names)
+
+    def test_get_empty_events_by_game_title(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_events= get_event_by_game_title("New Super Mario Borthers")
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 0)
+
+    def test_get_events_by_date(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_events= get_event_by_date(event_2.event_date)
+        self.assertEqual(len(fetched_events), 2)
+        names= set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_1.event_name, names)
+        events= [event_2, event_3]
+        for event in events:
+            with self.subTest(event_name=event.event_name):
+                self.assertIn(event.event_name, names)
+
+    def test_get_empty_events_by_date_list(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2026, 1, 22)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        fetched_events= get_event_by_date(date(2026, 11, 23))
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 0)
+
+    def test_get_event_by_capacity(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2026, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 100,
+            event_date= date(2027, 1, 15)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        saved_event_4= save_event_entry(event_4)
+        fetched_events= get_event_by_capacity(min_capacity= 4, max_capacity=8)
+        self.assertEqual(len(fetched_events), 2)
+        names= set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_1.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+        events= [event_2, event_3]
+        for event in events:
+            with self.subTest(event_name= event.event_name):
+                self.assertIn(event.event_name, names)
+
+    def test_get_event_with_missing_max_value_capacity(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2026, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 100,
+            event_date= date(2027, 1, 15)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        saved_event_4= save_event_entry(event_4)
+        fetched_events= get_event_by_capacity(min_capacity= 8, max_capacity= None)
+        self.assertEqual(len(fetched_events), 2)
+        names = set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_1.event_name, names)
+        self.assertNotIn(event_2.event_name, names)
+        events= [event_3, event_4]
+        for event in events:
+            with self.subTest(event_name= event.event_name):
+                self.assertIn(event.event_name, names)
+
+    def test_get_event_with_missing_min_value_capacity(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2026, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 100,
+            event_date= date(2027, 1, 15)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        saved_event_4= save_event_entry(event_4)
+        fetched_events= get_event_by_capacity(min_capacity=None, max_capacity=7)
+        self.assertEqual(len(fetched_events), 2)
+        names= set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_3.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+        events= [event_1, event_2]
+        for event in events:
+            with self.subTest(event_name= event.event_name):
+                self.assertIn(event.event_name, names)
+
+    def test_get_event_by_not_in_range_capacity(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2026, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 75,
+            event_date= date(2027, 1, 15)
+        )
+        fetched_events= get_event_by_capacity(76, 100)
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 0)
+
+    def test_get_event_by_no_bounds_capacity(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2026, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 75,
+            event_date= date(2027, 1, 15)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        saved_event_4= save_event_entry(event_4)
+        with self.assertRaises(ValueError):
+            fetched_events= get_event_by_capacity(min_capacity= None, max_capacity= None)
+
+    def test_get_event_with_bigger_min_than_max_capacity(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2026, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 75,
+            event_date= date(2027, 1, 15)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        saved_event_4= save_event_entry(event_4)
+        with self.assertRaises(ValueError):
+            fetched_events= get_event_by_capacity(min_capacity=100, max_capacity= 10)
