@@ -858,3 +858,44 @@ class TestEventRepository(unittest.TestCase):
     def test_unsaved_event_exists(self):
         result=event_exists("Super Mario Galaxy")
         self.assertIs(result, False)
+
+    def test_get_upcoming_events(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        event_3 = Event(
+            event_id= 3,
+            event_name= "Super Mario Galaxy 2 Fall Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 8,
+            event_date= date(2027, 1, 22)
+        )
+        event_4= Event(
+            event_id= 4,
+            event_name= "Super Mario Party Jamboree Cocktail Night",
+            event_type= EventType.OPEN_GAME_NIGHT,
+            game_title= "Super Mario Party Jamboree",
+            event_capacity= 75,
+            event_date= date(2027, 1, 15)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        saved_event_3= save_event_entry(event_3)
+        saved_event_4= save_event_entry(event_4)
+        fetched_events= get_upcoming_events(event_date= date(2026, 11, 25))
+        self.assertEqual(len(fetched_events), 3)
+        names= set()
+        for fetched_event in fetched_events:
+            names.add(fetched_event.event_name)
+        self.assertNotIn(event_2.event_name, names)
+        events= [event_1, event_3, event_4]
+        for event in events:
+            with self.subTest(event_name= event.event_name):
+                self.assertIn(event.event_name, names)
