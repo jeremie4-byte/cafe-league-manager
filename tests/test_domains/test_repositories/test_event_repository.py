@@ -824,3 +824,37 @@ class TestEventRepository(unittest.TestCase):
         saved_event_4= save_event_entry(event_4)
         with self.assertRaises(ValueError):
             fetched_events= get_event_by_capacity(min_capacity=100, max_capacity= 10)
+
+    def test_event_exists(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        result= event_exists(event_2.event_name)
+        self.assertIs(result, True)
+
+    def test_event_exists_missing_name(self):
+        event_1= self.helper_event()
+        event_2 = Event(
+            event_id= 2,
+            event_name= "Super Mario Galaxy 2 Winter Speedrun",
+            event_type= EventType.RANKED_LEAGUE_MATCH,
+            game_title= "Super Mario Galaxy 2",
+            event_capacity= 4,
+            event_date= date(2025, 11, 17)
+        )
+        saved_event_1= save_event_entry(event_1)
+        saved_event_2= save_event_entry(event_2)
+        result= event_exists("New Super Mario Brothers")
+        self.assertIs(result, False)
+
+    def test_unsaved_event_exists(self):
+        result=event_exists("Super Mario Galaxy")
+        self.assertIs(result, False)
