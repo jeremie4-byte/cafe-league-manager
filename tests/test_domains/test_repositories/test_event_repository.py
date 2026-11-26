@@ -21,7 +21,9 @@ from data.repositories.event_repository import (
     get_upcoming_events,
     get_events_by_date_range,
     event_exists,
-    get_past_events
+    get_past_events,
+    get_next_event,
+    search_events_by_name
 )
 # Add these to the import list as you write tests for them:
 # get_next_event, get_past_events, search_events_by_name,
@@ -688,6 +690,94 @@ class TestEventRepository(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_get_past_events(self):
+        event_1= self.helper_event(event_id=1)
+        event_2= self.helper_event(event_id=2, event_name="Winter Speedrun", event_date=date(2025, 11, 17))
+        event_3= self.helper_event(event_id=3, event_name="Fall Speedrun", event_date=date(2027, 1, 22))
+        event_4= self.helper_event(event_id=4, event_name="Cocktail Night", event_date=date(2027, 1, 15))
+        self.save_events(event_1, event_2, event_3, event_4)
+
+        fetched_events= get_past_events(event_4.event_date) # returns only event 2 and event 1 as it is everything prior to event_4 date
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 2)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_1.event_name, event_2.event_name])
+        self.assertNotIn(event_3.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+
+    def test_get_no_parameter_past_events(self):
+        event_1= self.helper_event(event_id=1)
+        event_2= self.helper_event(event_id=2, event_name="Winter Speedrun", event_date=date(2025, 11, 17))
+        event_3= self.helper_event(event_id=3, event_name="Fall Speedrun", event_date=date(2027, 1, 22))
+        event_4= self.helper_event(event_id=4, event_name="Cocktail Night", event_date=date(2027, 1, 15))
+        self.save_events(event_1, event_2, event_3, event_4)
+
+        fetched_events= get_past_events()
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 1)
+        names= [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name])
+        self.assertNotIn(event_1.event_name, names)
+        self.assertNotIn(event_3.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+
+    def test_get_same_date_past_events(self):
+        event_1= self.helper_event(event_id=1)
+        event_2= self.helper_event(event_id=2, event_name="Winter Speedrun", event_date=date(2026, 12, 12))
+        event_3= self.helper_event(event_id=3, event_name="Fall Speedrun", event_date=date(2027, 1, 22))
+        event_4= self.helper_event(event_id=4, event_name="Cocktail Night", event_date=date(2027, 1, 15))
+        self.save_events(event_2, event_1, event_3, event_4)
+
+        fetched_events= get_past_events(event_4.event_date) # returns only event 2 and event 1 as it is everything prior to event_4 date
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 2)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_1.event_name, event_2.event_name])
+        self.assertNotIn(event_3.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+
+    # ------------------------------------------------------------------
+    # get_next_events
+    # ------------------------------------------------------------------
+
+    def test_get_next_event(self):
+        event_1= self.helper_event(event_id=1)
+        event_2= self.helper_event(event_id=2, event_name="Winter Speedrun", event_date=date(2025, 11, 17))
+        event_3= self.helper_event(event_id=3, event_name="Fall Speedrun", event_date=date(2027, 1, 22))
+        event_4= self.helper_event(event_id=4, event_name="Cocktail Night", event_date=date(2027, 1, 15))
+        self.save_events(event_2, event_1, event_3, event_4)
+
+        fetched_event= get_next_event(from_date=event_1.event_date)
+        self.assertEqual(fetched_event.event_id, 4)
+        self.assertEqual(fetched_event.event_name, "Cocktail Night")
+
+    def test_get_next_event_no_date(self):
+        event_1= self.helper_event(event_id=1, event_date= date(2099, 12, 12))
+        event_2= self.helper_event(event_id=2, event_name="Winter Speedrun", event_date=date(2000, 11, 17))
+        self.save_events(event_1, event_2)
+
+        fetched_event= get_next_event()
+        self.assertEqual(fetched_event.event_id, 1)
+        self.assertEqual(fetched_event.event_name, "Mario Kart Wii Grand Prix Championship")
+
+    def test_get_no_future_next_event(self):
+        event_1= self.helper_event(event_id=1)
+        event_2= self.helper_event(event_id=2, event_name="Winter Speedrun", event_date=date(2026, 12, 12))
+        self.save_events(event_1, event_2)
+
+        fetched_event= get_next_event(from_date=event_1.event_date)
+        self.assertIsNone(fetched_event)
+
+    # ------------------------------------------------------------------
+    # search_events_by_name()
+    # ------------------------------------------------------------------
+
+
+
+
+
 
 # TODO (later): get_past_events, get_next_event, search_events_by_name, aggregates
 
