@@ -25,8 +25,6 @@ from data.repositories.event_repository import (
     get_next_event,
     search_events_by_name
 )
-# Add these to the import list as you write tests for them:
-# get_next_event, get_past_events, search_events_by_name,
 # count_events_by_type, get_busiest_game_titles, get_average_capacity
 
 
@@ -739,7 +737,7 @@ class TestEventRepository(unittest.TestCase):
         self.assertNotIn(event_4.event_name, names)
 
     # ------------------------------------------------------------------
-    # get_next_events
+    # get_next_event
     # ------------------------------------------------------------------
 
     def test_get_next_event(self):
@@ -774,13 +772,122 @@ class TestEventRepository(unittest.TestCase):
     # search_events_by_name()
     # ------------------------------------------------------------------
 
+    def save_search_events(self):
+        events = [
+            self.helper_event(event_id=1),
+            self.helper_event(event_id=2, event_name="Mario Couple's Night Double Dashing", event_date=date(2025, 11, 17)),
+            self.helper_event(event_id=3, event_name="Fall Speedrun", event_date=date(2027, 1, 22)),
+            self.helper_event(event_id=4, event_name="Cocktail Night", event_date=date(2027, 1, 15)),
+        ]
+        self.save_events(*events)
+        return events
+
+    def test_search_events_by_name(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="Mario")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 2)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name, event_1.event_name])
+        self.assertNotIn(event_3.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+
+    def test_search_events_by_name_is_case_insensitive(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="mario")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 2)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name, event_1.event_name])
+        self.assertNotIn(event_3.event_name, names)
+        self.assertNotIn(event_4.event_name, names)
+
+    def test_search_events_by_part_string(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="Night")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 2)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name, event_4.event_name])
+        self.assertNotIn(event_1.event_name, names)
+        self.assertNotIn(event_3.event_name, names)
+
+    def test_search_empty_and_whitespace_events(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        bad_keywords= ["", "  ", "\t", "\n"]
+
+        for bad_keyword in bad_keywords:
+            with self.subTest(keyword=bad_keyword):
+                with self.assertRaises(ValueError):
+                    search_events_by_name(bad_keyword)
+
+    def test_search_events_with_no_matching_keyword(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="Sonic")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 0)
+
+    def test_search_events_by_name_percent_acts_as_wildcard(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="%")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 4)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name, event_1.event_name, event_4.event_name, event_3.event_name])
+
+    def test_search_events_by_name_underscore_acts_as_wildcard(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="_")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 4)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name, event_1.event_name, event_4.event_name, event_3.event_name])
+
+    def test_search_events_with_apostrophe_in_keyword(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        fetched_events= search_events_by_name(keyword="Couple's")
+
+        self.assertIsNotNone(fetched_events)
+        self.assertEqual(len(fetched_events), 1)
+        names = [event.event_name for event in fetched_events]
+        self.assertEqual(names, [event_2.event_name])
+
+    def test_search_events_by_name_ignores_surrounding_whitespace(self):
+        event_1, event_2, event_3, event_4 = self.save_search_events()
+
+        padded_keywords= ["  Mario", "Mario  ", "  Mario  ", "\tMario"]
+
+        for padded_keyword in padded_keywords:
+            with self.subTest(keyword=padded_keyword):
+                fetched_events= search_events_by_name(keyword=padded_keyword)
+
+                self.assertIsNotNone(fetched_events)
+                self.assertEqual(len(fetched_events), 2)
+                names = [event.event_name for event in fetched_events]
+                self.assertEqual(names, [event_2.event_name, event_1.event_name])
+                self.assertNotIn(event_3.event_name, names)
+                self.assertNotIn(event_4.event_name, names)
 
 
+    # ------------------------------------------------------------------
+    # count_events_by_type(()
+    # ------------------------------------------------------------------
 
 
-
-# TODO (later): get_past_events, get_next_event, search_events_by_name, aggregates
-
-
+# Tommorow start with count_events_by_type()
 if __name__ == "__main__":
     unittest.main()
